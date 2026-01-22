@@ -66,3 +66,4 @@ class AlertPayload(BaseModel):
     transcript: Optional[str] = None
     enrichment: Dict[str, Any] = Field(default_factory=dict)
     extra: Dict[str, Any] = Field(default_factory=dict)
+
