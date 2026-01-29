@@ -35,3 +35,4 @@ def is_allowed(subnet: str, allowed: List[str], blocked: List[str]) -> bool:
             if net.subnet_of(candidate):
                 return True
     return False
+
