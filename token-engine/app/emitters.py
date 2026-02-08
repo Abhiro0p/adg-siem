@@ -17,3 +17,4 @@ class WebhookEmitter:
                 await client.post(self.url, json=access.model_dump())
         except Exception:
             pass
+
