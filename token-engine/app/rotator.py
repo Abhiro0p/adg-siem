@@ -13,3 +13,4 @@ def rotate_tokens(store: TokenStore, token_types: List[str], ttl_hours: int | No
         store.add_token(token)
         tokens.append(token)
     return tokens
+
