@@ -120,3 +120,4 @@ async def rotate(
 async def bundle(principal=Depends(require_roles(principal_dep, ["token:read"]))):
     return build_decoy_bundle()
 
+
