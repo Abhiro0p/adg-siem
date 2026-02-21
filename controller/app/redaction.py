@@ -61,3 +61,4 @@ def _redact(obj: Any, blocked: frozenset[str] | set[str]) -> Any:
     if isinstance(obj, str) and _contains_sensitive_value(obj):
         return "[REDACTED]"
     return obj
+
