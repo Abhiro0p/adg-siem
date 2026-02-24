@@ -1,0 +1,10 @@
+[Unit]
+Description=Decoy memory secrets
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/decoy/decoy_memory.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

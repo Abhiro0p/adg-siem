@@ -1,0 +1,6 @@
+---
+- name: Seed Linux breadcrumbs
+  hosts: linux
+  become: true
+  roles:
+    - breadcrumbs-linux

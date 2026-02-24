@@ -1,0 +1,52 @@
+---
+- name: Create decoy directory
+  win_file:
+    path: C:\\Decoy
+    state: directory
+
+- name: Create decoy files
+  win_copy:
+    content: "username=decoy\\npassword=Winter2026!\\n"
+    dest: C:\\Decoy\\passwords.txt
+
+- name: Create decoy config
+  win_copy:
+    content: "db_host=10.10.50.10\napi_key=DECOY-{{ inventory_hostname }}\n"
+    dest: C:\\Decoy\\config.ini
+
+- name: Create browser passwords file
+  win_copy:
+    content: "url,username,password\nhttps://intranet.local,jsmith,Winter2026!\n"
+    dest: C:\\Decoy\\browser_passwords.csv
+
+- name: Seed RDP history breadcrumb
+  win_regedit:
+    path: HKCU:\\Software\\Microsoft\\Terminal Server Client\\Default
+    name: MRU0
+    data: decoy-rdp.corp.local
+    type: string
+
+- name: Seed environment variable
+  win_environment:
+    name: DECOY_API_KEY
+    value: "DECOY-{{ inventory_hostname }}-{{ ansible_date_time.epoch }}"
+    level: user
+
+- name: Seed credential manager entry
+  win_shell: cmdkey /add:decoy-db.corp.local /user:svc_backup /pass:Summer2026!
+
+- name: Deploy decoy memory script
+  win_copy:
+    src: ../../../../scripts/decoy_memory.ps1
+    dest: C:\\Decoy\\decoy_memory.ps1
+
+- name: Register decoy memory scheduled task
+  win_scheduled_task:
+    name: DecoyMemory
+    actions:
+      - path: powershell.exe
+        arguments: -ExecutionPolicy Bypass -File C:\\Decoy\\decoy_memory.ps1
+    triggers:
+      - type: boot
+    username: "NT AUTHORITY\\SYSTEM"
+    run_level: highest

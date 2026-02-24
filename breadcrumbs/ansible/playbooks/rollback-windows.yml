@@ -1,0 +1,24 @@
+---
+- name: Roll back Windows breadcrumbs
+  hosts: windows
+  tasks:
+    - name: Remove decoy files
+      win_file:
+        path: C:\\Decoy
+        state: absent
+    - name: Remove RDP history entry
+      win_regedit:
+        path: HKCU:\\Software\\Microsoft\\Terminal Server Client\\Default
+        name: MRU0
+        state: absent
+    - name: Remove environment variable
+      win_environment:
+        state: absent
+        name: DECOY_API_KEY
+        level: user
+    - name: Remove credential manager entry
+      win_shell: cmdkey /delete:decoy-db.corp.local
+    - name: Remove decoy memory scheduled task
+      win_scheduled_task:
+        name: DecoyMemory
+        state: absent

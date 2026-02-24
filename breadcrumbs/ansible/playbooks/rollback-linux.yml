@@ -1,0 +1,32 @@
+---
+- name: Roll back Linux breadcrumbs
+  hosts: linux
+  become: true
+  tasks:
+    - name: Remove decoy files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /opt/decoy/passwords.txt
+        - /opt/decoy/config.yaml
+      - /opt/decoy/browser_passwords.csv
+      - /opt/decoy/decoy_memory.py
+    - name: Remove env var file
+      file:
+        path: /etc/profile.d/decoy_env.sh
+        state: absent
+    - name: Stop decoy memory service
+      systemd:
+        name: decoy-memory
+        state: stopped
+        enabled: false
+    - name: Remove decoy memory service file
+      file:
+        path: /etc/systemd/system/decoy-memory.service
+        state: absent
+    - name: Remove SSH known_hosts entry
+      lineinfile:
+        path: /etc/ssh/ssh_known_hosts
+        regexp: "^decoy-host"
+        state: absent

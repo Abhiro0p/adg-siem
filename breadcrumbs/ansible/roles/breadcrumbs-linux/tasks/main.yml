@@ -1,0 +1,246 @@
+---
+# ---------------------------------------------------------------------------
+# ADG Breadcrumb Deployment — Linux
+# Deploys realistic decoy artifacts across multiple credential locations.
+# All values are generated at playbook runtime from ADG token-engine.
+# ---------------------------------------------------------------------------
+
+- name: Ensure decoy directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /opt/decoy
+    - /root/.ssh
+    - /root/.aws
+    - /root/.config/gcloud
+    - /root/.kube
+    - /root/.docker
+    - /home/{{ ansible_user | default('ubuntu') }}/.ssh
+    - /home/{{ ansible_user | default('ubuntu') }}/.aws
+    - /home/{{ ansible_user | default('ubuntu') }}/.config/gcloud
+
+# ----------------------------------
+# Environment variables
+# ----------------------------------
+- name: Seed decoy API key in environment
+  copy:
+    dest: /etc/profile.d/decoy_env.sh
+    content: |
+      export API_KEY="{{ adg_api_key | default('APIKEY-' + inventory_hostname + '-' + ansible_date_time.epoch) }}"
+      export GITHUB_TOKEN="{{ adg_github_token | default('ghp_' + ansible_date_time.epoch + 'aAbBcCdDeEfF123456789012') }}"
+      export DATABASE_URL="{{ adg_db_url | default('postgresql://admin:S3cr3tP@ss@db.corp-internal.local/appdb') }}"
+      export AWS_ACCESS_KEY_ID="{{ adg_aws_key_id | default('AKIA' + inventory_hostname[:4].upper() + 'FAKEKEY00000') }}"
+      export AWS_SECRET_ACCESS_KEY="{{ adg_aws_secret | default('FakeS3cr3tKey/ADGHoneytoken+xxxxxxxxxxxxxxx') }}"
+    mode: "0644"
+
+# ----------------------------------
+# AWS credentials file
+# ----------------------------------
+- name: Deploy AWS credentials (root)
+  copy:
+    dest: /root/.aws/credentials
+    content: |
+      [default]
+      aws_access_key_id = {{ adg_aws_key_id | default('AKIA' + inventory_hostname[:4].upper() + 'FAKEKEY00001') }}
+      aws_secret_access_key = {{ adg_aws_secret | default('FakeS3cr3tKey/ADGHoneytoken+yyyyyyyyyyyyyyyy') }}
+      region = us-east-1
+    mode: "0600"
+
+- name: Deploy AWS config (root)
+  copy:
+    dest: /root/.aws/config
+    content: |
+      [default]
+      region = us-east-1
+      output = json
+    mode: "0600"
+
+# ----------------------------------
+# SSH breadcrumbs
+# ----------------------------------
+- name: Add SSH known_hosts breadcrumb
+  lineinfile:
+    path: /etc/ssh/ssh_known_hosts
+    create: true
+    line: "{{ adg_ssh_hostname | default('jump.corp-internal.local') }} ssh-rsa {{ adg_ssh_pubkey | default('AAAAB3NzaC1yc2EAAAADAQABAAABgQDadgFakeKeyForHoneytokenDetection' + ansible_date_time.epoch) }}"
+    state: present
+
+- name: Deploy decoy SSH private key (root)
+  copy:
+    dest: /root/.ssh/id_rsa_corp
+    content: |
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpAIBAAKCAQEA{{ ansible_date_time.epoch | hash('sha256') | truncate(60, true, '') }}
+      ADGDecoyPrivateKeyBreadcrumbForHoneytokenDetection==
+      -----END RSA PRIVATE KEY-----
+    mode: "0600"
+
+- name: Deploy SSH config with decoy host
+  copy:
+    dest: /root/.ssh/config
+    content: |
+      Host jump.corp-internal.local
+        HostName jump.corp-internal.local
+        User {{ ansible_user | default('ubuntu') }}
+        IdentityFile ~/.ssh/id_rsa_corp
+        Port 22
+
+      Host bastion
+        HostName bastion.corp.{{ inventory_hostname }}.local
+        User ec2-user
+        IdentityFile ~/.ssh/id_rsa_corp
+    mode: "0600"
+
+# ----------------------------------
+# Git credentials
+# ----------------------------------
+- name: Deploy .git-credentials breadcrumb
+  copy:
+    dest: /root/.git-credentials
+    content: |
+      https://{{ ansible_user | default('ubuntu') }}:{{ adg_github_token | default('ghp_' + ansible_date_time.epoch + 'aAbBcCdD12345678901234') }}@github.com
+      https://{{ ansible_user | default('ubuntu') }}:{{ adg_gitlab_token | default('glpat-' + ansible_date_time.epoch + 'abcdef') }}@gitlab.com
+    mode: "0600"
+
+- name: Configure git credential helper
+  copy:
+    dest: /root/.gitconfig
+    content: |
+      [user]
+        name = {{ ansible_user | default('ubuntu') }}
+        email = {{ ansible_user | default('ubuntu') }}@{{ inventory_hostname }}
+      [credential]
+        helper = store
+    mode: "0644"
+
+# ----------------------------------
+# Kubernetes service account
+# ----------------------------------
+- name: Deploy decoy kubeconfig
+  copy:
+    dest: /root/.kube/config
+    content: |
+      apiVersion: v1
+      clusters:
+      - cluster:
+          server: https://k8s.corp-internal.local:6443
+        name: corp-cluster
+      contexts:
+      - context:
+          cluster: corp-cluster
+          user: admin
+        name: corp-context
+      current-context: corp-context
+      kind: Config
+      users:
+      - name: admin
+        user:
+          token: "{{ adg_k8s_token | default('eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.ADGDecoyK8sTokenBreadcrumb.' + ansible_date_time.epoch) }}"
+    mode: "0600"
+
+# ----------------------------------
+# Docker credentials
+# ----------------------------------
+- name: Deploy .docker/config.json breadcrumb
+  copy:
+    dest: /root/.docker/config.json
+    content: |
+      {
+        "auths": {
+          "registry.hub.docker.com": {
+            "auth": "{{ (ansible_user | default('ubuntu') + ':' + adg_api_key | default('FakeDockerPassword123!')) | b64encode }}"
+          },
+          "ghcr.io": {
+            "auth": "{{ (ansible_user | default('ubuntu') + ':' + adg_github_token | default('ghp_FakeGitHubPAT1234567890123456')) | b64encode }}"
+          }
+        }
+      }
+    mode: "0600"
+
+# ----------------------------------
+# GCP service account
+# ----------------------------------
+- name: Deploy GCP service account JSON
+  copy:
+    dest: /root/.config/gcloud/application_default_credentials.json
+    content: |
+      {
+        "type": "service_account",
+        "project_id": "corp-production-{{ ansible_date_time.epoch[-4:] }}",
+        "private_key_id": "{{ ansible_date_time.epoch | hash('sha1') }}",
+        "client_email": "deploy-svc@corp-production.iam.gserviceaccount.com",
+        "client_id": "{{ ansible_date_time.epoch }}",
+        "private_key": "-----BEGIN RSA PRIVATE KEY-----\nADGDecoyGCPKey{{ ansible_date_time.epoch }}\n-----END RSA PRIVATE KEY-----\n"
+      }
+    mode: "0600"
+
+# ----------------------------------
+# Application config files
+# ----------------------------------
+- name: Deploy application .env file
+  copy:
+    dest: /opt/decoy/.env
+    content: |
+      API_KEY={{ adg_api_key | default('sk_live_ADGHoneytokenAPIKey' + ansible_date_time.epoch) }}
+      DATABASE_URL={{ adg_db_url | default('postgresql://app:S3cr3t@prod-db.corp-internal.local/app') }}
+      REDIS_URL=redis://:FakeRedisPassword123@redis.corp-internal.local:6379/0
+      SECRET_KEY={{ ansible_date_time.epoch | hash('sha256') }}
+      JWT_SECRET={{ ansible_date_time.epoch | hash('sha512') | truncate(32, true, '') }}
+    mode: "0640"
+
+- name: Deploy decoy config.yaml
+  copy:
+    dest: /opt/decoy/config.yaml
+    content: |
+      # Application configuration
+      api_key: "{{ adg_api_key | default('APIKEY-ADGHoneytoken-' + ansible_date_time.epoch) }}"
+      database:
+        host: prod-db.corp-internal.local
+        port: 5432
+        name: appdb
+        username: app
+        password: "S3cr3tAppPassword!"
+      aws:
+        access_key_id: "{{ adg_aws_key_id | default('AKIA' + inventory_hostname[:4].upper() + 'FAKEKEY00002') }}"
+        secret_access_key: "{{ adg_aws_secret | default('ADGDecoyS3cr3tKey/xxxxxxxxxxxxxxxxxx') }}"
+        region: us-east-1
+    mode: "0640"
+
+# ----------------------------------
+# Passwords file
+# ----------------------------------
+- name: Copy browser passwords CSV
+  copy:
+    src: decoy/browser_passwords.csv
+    dest: /opt/decoy/browser_passwords.csv
+    mode: "0640"
+
+- name: Copy passwords.txt decoy
+  copy:
+    src: decoy/passwords.txt
+    dest: /opt/decoy/passwords.txt
+    mode: "0640"
+
+# ----------------------------------
+# Decoy memory service
+# ----------------------------------
+- name: Deploy decoy memory script
+  copy:
+    src: ../../../../scripts/decoy_memory.py
+    dest: /opt/decoy/decoy_memory.py
+    mode: "0755"
+
+- name: Install decoy memory service
+  copy:
+    src: decoy/decoy-memory.service
+    dest: /etc/systemd/system/decoy-memory.service
+    mode: "0644"
+
+- name: Enable and start decoy memory service
+  systemd:
+    name: decoy-memory
+    enabled: true
+    state: started
+    daemon_reload: true

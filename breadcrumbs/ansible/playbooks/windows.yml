@@ -1,0 +1,5 @@
+---
+- name: Seed Windows breadcrumbs
+  hosts: windows
+  roles:
+    - breadcrumbs-windows
