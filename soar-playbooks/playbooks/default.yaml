@@ -1,0 +1,7 @@
+playbooks:
+  - name: isolate-and-snapshot
+    on_alert: true
+    steps:
+      - action: quarantine_host
+      - action: snapshot_honeypot
+      - action: extract_iocs
