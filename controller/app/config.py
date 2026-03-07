@@ -83,3 +83,4 @@ class Settings(BaseSettings):
 
     class Config:
         env_prefix = "ADG_"
+
