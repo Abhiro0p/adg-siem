@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-fake-jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-fake-jenkins
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-fake-jenkins
+    spec:
+      containers:
+        - name: fake-jenkins
+          image: {{ .Values.fakeJenkins.image }}
+          ports:
+            - containerPort: {{ .Values.fakeJenkins.servicePort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-fake-jenkins
+spec:
+  selector:
+    app: {{ .Release.Name }}-fake-jenkins
+  ports:
+    - port: {{ .Values.fakeJenkins.servicePort }}
+      targetPort: {{ .Values.fakeJenkins.servicePort }}

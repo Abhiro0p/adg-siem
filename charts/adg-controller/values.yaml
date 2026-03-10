@@ -1,0 +1,4 @@
+image: adg/controller:latest
+replicas: 1
+service:
+  port: 8080

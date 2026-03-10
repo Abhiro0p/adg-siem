@@ -1,0 +1,23 @@
+cowrie:
+  image: cowrie/cowrie:latest
+  servicePort: 22
+
+dionaea:
+  image: dionaea/dionaea:latest
+  servicePort: 445
+
+pyrdp:
+  image: gosecure/pyrdp:latest
+  servicePort: 3389
+
+fakeJenkins:
+  image: adg/fake-jenkins:latest
+  servicePort: 8080
+
+fakeGrafana:
+  image: adg/fake-grafana:latest
+  servicePort: 3000
+
+samba:
+  image: dperson/samba:latest
+  servicePort: 445

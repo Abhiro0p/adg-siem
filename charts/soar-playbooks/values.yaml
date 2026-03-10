@@ -1,0 +1,4 @@
+image: adg/soar-playbooks:latest
+replicas: 1
+service:
+  port: 8090

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-samba
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-samba
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-samba
+    spec:
+      containers:
+        - name: samba
+          image: {{ .Values.samba.image }}
+          args: ["-s", "public;/shared;yes;no;yes;all"]
+          ports:
+            - containerPort: 445
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-samba
+spec:
+  selector:
+    app: {{ .Release.Name }}-samba
+  ports:
+    - port: {{ .Values.samba.servicePort }}
+      targetPort: 445

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-pyrdp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-pyrdp
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-pyrdp
+    spec:
+      containers:
+        - name: pyrdp
+          image: {{ .Values.pyrdp.image }}
+          ports:
+            - containerPort: 3389
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-pyrdp
+spec:
+  selector:
+    app: {{ .Release.Name }}-pyrdp
+  ports:
+    - port: {{ .Values.pyrdp.servicePort }}
+      targetPort: 3389

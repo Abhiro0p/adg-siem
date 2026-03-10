@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-fake-grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-fake-grafana
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-fake-grafana
+    spec:
+      containers:
+        - name: fake-grafana
+          image: {{ .Values.fakeGrafana.image }}
+          ports:
+            - containerPort: {{ .Values.fakeGrafana.servicePort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-fake-grafana
+spec:
+  selector:
+    app: {{ .Release.Name }}-fake-grafana
+  ports:
+    - port: {{ .Values.fakeGrafana.servicePort }}
+      targetPort: {{ .Values.fakeGrafana.servicePort }}

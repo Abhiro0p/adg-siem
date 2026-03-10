@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-token-engine
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-token-engine
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-token-engine
+    spec:
+      containers:
+        - name: token-engine
+          image: {{ .Values.image }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
