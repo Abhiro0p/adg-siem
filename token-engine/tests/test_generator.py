@@ -12,3 +12,4 @@ def test_generate_api_key():
     # prefix is one of: sk_, pk_, api_, key_, tok_
     assert "_" in token.value
     assert len(token.value) > 10
+
