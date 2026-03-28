@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cowrie
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cowrie
+  template:
+    metadata:
+      labels:
+        app: cowrie
+    spec:
+      containers:
+        - name: cowrie
+          image: cowrie/cowrie:latest
+          ports:
+            - containerPort: 2222
+        - name: pcap
+          image: nicolaka/netshoot:latest
+          command: ["/bin/sh", "-c"]
+          args: ["tcpdump -i any -w /pcap/cowrie.pcap"]
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+        - name: pcap-forwarder
+          image: adg/pcap-forwarder:latest
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: pcap-events
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+      volumes:
+        - name: pcap
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cowrie
+  namespace: honeypots
+spec:
+  selector:
+    app: cowrie
+  ports:
+    - port: 22
+      targetPort: 2222

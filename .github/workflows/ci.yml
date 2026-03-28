@@ -1,0 +1,81 @@
+name: adg-ci
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+
+jobs:
+  test-controller:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install controller deps
+        working-directory: controller
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Run controller tests
+        working-directory: controller
+        run: |
+          PYTHONPATH=. pytest -q
+
+  lint-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install lint tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff==0.5.1 mypy==1.10.0
+      - name: Run ruff
+        run: ruff check
+      - name: Run mypy
+        run: |
+          cd controller
+          mypy --config-file ../mypy.ini app
+          cd ../token-engine
+          mypy --config-file ../mypy.ini --explicit-package-bases ./app
+          cd ../soar-playbooks
+          mypy --config-file ../mypy.ini app
+
+  supply-chain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: cyclonedx-json
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: fs
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+  test-token-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install token-engine deps
+        working-directory: token-engine
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Run token-engine tests
+        working-directory: token-engine
+        run: |
+          PYTHONPATH=. pytest -q

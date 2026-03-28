@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-ha
+  namespace: honeypots
+spec:
+  serviceName: redis-ha
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-ha
+  template:
+    metadata:
+      labels:
+        app: redis-ha
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2
+          args: ["--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ha
+  namespace: honeypots
+spec:
+  clusterIP: None
+  selector:
+    app: redis-ha
+  ports:
+    - port: 6379
+      targetPort: 6379

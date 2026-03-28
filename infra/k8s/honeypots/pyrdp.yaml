@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pyrdp
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pyrdp
+  template:
+    metadata:
+      labels:
+        app: pyrdp
+    spec:
+      containers:
+        - name: pyrdp
+          image: gosecure/pyrdp:latest
+          ports:
+            - containerPort: 3389
+        - name: pcap
+          image: nicolaka/netshoot:latest
+          command: ["/bin/sh", "-c"]
+          args: ["tcpdump -i any -w /pcap/pyrdp.pcap"]
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+        - name: pcap-forwarder
+          image: adg/pcap-forwarder:latest
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: pcap-events
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+      volumes:
+        - name: pcap
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pyrdp
+  namespace: honeypots
+spec:
+  selector:
+    app: pyrdp
+  ports:
+    - port: 3389
+      targetPort: 3389

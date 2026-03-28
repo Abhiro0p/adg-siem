@@ -1,0 +1,34 @@
+{
+  "title": "Adaptive Deception Overview",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Active Lures",
+      "datasource": "Loki",
+      "targets": [
+        {"expr": "count_over_time({job=\"adg-controller\"} |= \"lure\" [5m])"}
+      ],
+      "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "stat",
+      "title": "Honeytoken Access Events",
+      "datasource": "Loki",
+      "targets": [
+        {"expr": "count_over_time({job=\"token-engine\"} |= \"access\" [5m])"}
+      ],
+      "gridPos": {"x": 6, "y": 0, "w": 6, "h": 4}
+    },
+    {
+      "type": "timeseries",
+      "title": "Honeypot Interactions",
+      "datasource": "Loki",
+      "targets": [
+        {"expr": "count_over_time({job=~\"honeypot.*\"} [5m])"}
+      ],
+      "gridPos": {"x": 0, "y": 4, "w": 12, "h": 6}
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dionaea
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dionaea
+  template:
+    metadata:
+      labels:
+        app: dionaea
+    spec:
+      containers:
+        - name: dionaea
+          image: dionaea/dionaea:latest
+          ports:
+            - containerPort: 445
+            - containerPort: 80
+        - name: pcap
+          image: nicolaka/netshoot:latest
+          command: ["/bin/sh", "-c"]
+          args: ["tcpdump -i any -w /pcap/dionaea.pcap"]
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+        - name: pcap-forwarder
+          image: adg/pcap-forwarder:latest
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: pcap-events
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+      volumes:
+        - name: pcap
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dionaea
+  namespace: honeypots
+spec:
+  selector:
+    app: dionaea
+  ports:
+    - port: 445
+      targetPort: 445
+    - port: 80
+      targetPort: 80

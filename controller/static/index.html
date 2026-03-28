@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ADG Admin</title>
+  <style>body{font-family:Arial;margin:2rem;} table{border-collapse:collapse;} td,th{border:1px solid #ddd;padding:6px;}</style>
+</head>
+<body>
+  <h2>Adaptive Deception Controller</h2>
+  <p>Use the APIs below to manage rules, lures, and enterprise integrations. This page is informational and respects the <code>ADG_ADMIN_UI_ENABLED</code> setting.</p>
+  <h3>Core endpoints</h3>
+  <table>
+    <thead>
+      <tr><th>Endpoint</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/lures</code></td><td>List active lure deployments.</td></tr>
+      <tr><td><code>/rules</code></td><td>List deception rules (governance).</td></tr>
+      <tr><td><code>/rules/reload</code></td><td>Reload rules after approval.</td></tr>
+      <tr><td><code>/events</code></td><td>Ingest sensor events.</td></tr>
+      <tr><td><code>/realism</code></td><td>Score event realism.</td></tr>
+      <tr><td><code>/coverage</code></td><td>Coverage heatmap by subnet.</td></tr>
+    </tbody>
+  </table>
+  <h3>Enterprise integrations</h3>
+  <table>
+    <thead>
+      <tr><th>Endpoint</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>/cmdb/assets</code></td><td>Pull asset inventory from CMDB.</td></tr>
+      <tr><td><code>/ad/decoy</code></td><td>Create AD decoy accounts.</td></tr>
+      <tr><td><code>/ad/disable</code></td><td>Disable decoy accounts.</td></tr>
+    </tbody>
+  </table>
+</body>
+</html>

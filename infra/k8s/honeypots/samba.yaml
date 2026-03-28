@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samba
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: samba
+  template:
+    metadata:
+      labels:
+        app: samba
+    spec:
+      containers:
+        - name: samba
+          image: dperson/samba:latest
+          args: ["-s", "public;/shared;yes;no;yes;all"]
+          ports:
+            - containerPort: 445
+        - name: pcap
+          image: nicolaka/netshoot:latest
+          command: ["/bin/sh", "-c"]
+          args: ["tcpdump -i any -w /pcap/samba.pcap"]
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+        - name: pcap-forwarder
+          image: adg/pcap-forwarder:latest
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: pcap-events
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+      volumes:
+        - name: pcap
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: samba
+  namespace: honeypots
+spec:
+  selector:
+    app: samba
+  ports:
+    - port: 445
+      targetPort: 445

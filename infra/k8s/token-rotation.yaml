@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: token-rotation
+  namespace: honeypots
+spec:
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: rotate
+              image: curlimages/curl:8.8.0
+              args:
+                - -X
+                - POST
+                - http://token-engine:8081/rotate
+                - -H
+                - Content-Type: application/json
+                - -d
+                - '{"token_types":["ssh_key","env_api_key","aws_key"],"ttl_hours":12}'
+          restartPolicy: OnFailure

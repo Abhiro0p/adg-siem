@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soar-playbooks
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soar-playbooks
+  template:
+    metadata:
+      labels:
+        app: soar-playbooks
+    spec:
+      containers:
+        - name: soar
+          image: adg/soar-playbooks:latest
+          ports:
+            - containerPort: 8090
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soar-playbooks
+  namespace: honeypots
+spec:
+  selector:
+    app: soar-playbooks
+  ports:
+    - port: 8090
+      targetPort: 8090

@@ -1,0 +1,7 @@
+# Deception subnet policy
+# allowed: subnets where lures may be deployed (empty = all allowed)
+# blocked: subnets where lures must never be deployed
+allowed: []
+blocked:
+  - 127.0.0.0/8
+  - 169.254.0.0/16

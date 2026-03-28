@@ -1,0 +1,24 @@
+rules:
+  - name: "Jenkins scan on 8080"
+    enabled: true
+    mitre: ["T1046", "T1040"]
+    when:
+      - field: "event_type"
+        op: "equals"
+        value: "port_scan"
+      - field: "data.port"
+        op: "equals"
+        value: 8080
+    actions:
+      - type: "deploy_honeypot"
+        params:
+          lure_type: "fake-jenkins"
+          subnet: "10.10.20.0/24"
+          ttl_seconds: 1800
+          dns:
+            zone: "corp.local."
+            name: "jenkins.corp.local."
+            type: "A"
+            value: "10.10.20.50"
+      - type: "emit_alert"
+        params: {}

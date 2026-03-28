@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-grafana
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fake-grafana
+  template:
+    metadata:
+      labels:
+        app: fake-grafana
+    spec:
+      containers:
+        - name: fake-grafana
+          image: adg/fake-grafana:latest
+          ports:
+            - containerPort: 3000
+        - name: pcap
+          image: nicolaka/netshoot:latest
+          command: ["/bin/sh", "-c"]
+          args: ["tcpdump -i any -w /pcap/fake-grafana.pcap"]
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+        - name: pcap-forwarder
+          image: adg/pcap-forwarder:latest
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: pcap-events
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+      volumes:
+        - name: pcap
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-grafana
+  namespace: honeypots
+spec:
+  selector:
+    app: fake-grafana
+  ports:
+    - port: 3000
+      targetPort: 3000

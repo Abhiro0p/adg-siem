@@ -1,0 +1,4 @@
+allowed_subnets:
+  - 10.10.0.0/16
+blocked_subnets:
+  - 10.10.99.0/24

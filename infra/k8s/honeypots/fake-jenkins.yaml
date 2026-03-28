@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-jenkins
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fake-jenkins
+  template:
+    metadata:
+      labels:
+        app: fake-jenkins
+    spec:
+      containers:
+        - name: fake-jenkins
+          image: adg/fake-jenkins:latest
+          ports:
+            - containerPort: 8080
+        - name: pcap
+          image: nicolaka/netshoot:latest
+          command: ["/bin/sh", "-c"]
+          args: ["tcpdump -i any -w /pcap/fake-jenkins.pcap"]
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+        - name: pcap-forwarder
+          image: adg/pcap-forwarder:latest
+          env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: KAFKA_TOPIC
+              value: pcap-events
+          volumeMounts:
+            - name: pcap
+              mountPath: /pcap
+      volumes:
+        - name: pcap
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-jenkins
+  namespace: honeypots
+spec:
+  selector:
+    app: fake-jenkins
+  ports:
+    - port: 8080
+      targetPort: 8080

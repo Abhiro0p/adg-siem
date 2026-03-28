@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deception-controller
+  namespace: honeypots
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: deception-controller
+  template:
+    metadata:
+      labels:
+        app: deception-controller
+    spec:
+      containers:
+        - name: controller
+          image: adg/controller:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          env:
+            - name: ADG_RULES_PATH
+              value: /app/rules/example.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deception-controller
+  namespace: honeypots
+spec:
+  selector:
+    app: deception-controller
+  ports:
+    - port: 8080
+      targetPort: 8080

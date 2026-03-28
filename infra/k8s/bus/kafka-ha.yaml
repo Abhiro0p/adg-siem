@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka-ha
+  namespace: honeypots
+spec:
+  serviceName: kafka-ha
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kafka-ha
+  template:
+    metadata:
+      labels:
+        app: kafka-ha
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:3.7
+          env:
+            - name: KAFKA_CFG_PROCESS_ROLES
+              value: broker,controller
+            - name: KAFKA_CFG_LISTENERS
+              value: PLAINTEXT://:9092,CONTROLLER://:9093
+            - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+              value: CONTROLLER
+            - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+              value: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+            - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+              value: 0@kafka-ha-0.kafka-ha:9093,1@kafka-ha-1.kafka-ha:9093,2@kafka-ha-2.kafka-ha:9093
+            - name: KAFKA_CFG_ADVERTISED_LISTENERS
+              value: PLAINTEXT://kafka-ha:9092
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+          ports:
+            - containerPort: 9092
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ha
+  namespace: honeypots
+spec:
+  clusterIP: None
+  selector:
+    app: kafka-ha
+  ports:
+    - port: 9092
+      targetPort: 9092

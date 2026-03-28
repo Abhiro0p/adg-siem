@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: audit-log-retention
+  namespace: honeypots
+spec:
+  schedule: "30 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleanup
+              image: alpine:3.20
+              command:
+                - /bin/sh
+                - -c
+                - find /state -type f -name "*.log" -mtime +14 -delete
+              volumeMounts:
+                - name: state
+                  mountPath: /state
+          restartPolicy: OnFailure
+          volumes:
+            - name: state
+              emptyDir: {}
