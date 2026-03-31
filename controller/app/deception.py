@@ -4,7 +4,7 @@ import math
 import time
 from collections import defaultdict, deque
 from threading import Lock
-from typing import Any, Deque, Dict, List, Tuple
+from typing import Any, Deque, Dict, List
 
 from .models import Event
 

@@ -85,7 +85,7 @@ async def run_readiness_checks(
         "vault": results[2] if not isinstance(results[2], Exception) else {"ok": False, "error": str(results[2])},
         "siem": results[3] if not isinstance(results[3], Exception) else {"ok": False, "error": str(results[3])},
     }
-    all_ok = all(c.get("ok", False) for c in checks.values())
+    all_ok = all(c.get("ok", False) for c in checks.values() if isinstance(c, dict))
     return {
         "ready": all_ok,
         "checks": checks,

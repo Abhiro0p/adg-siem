@@ -7,7 +7,7 @@ import json
 import logging
 import time
 from base64 import b64encode
-from typing import Dict, List, Optional
+from typing import Any, Dict, List
 
 import httpx
 
@@ -43,7 +43,7 @@ class SIEMEmitter:
     async def emit(self, alert: AlertPayload) -> None:
         raise NotImplementedError
 
-    async def health(self) -> Dict[str, bool]:
+    async def health(self) -> Dict[str, Any]:
         return {"ok": True}
 
 
@@ -61,7 +61,7 @@ class WebhookEmitter(SIEMEmitter):
             headers["X-ADG-Signature"] = f"sha256={sig}"
         await _post_with_retry(self.url, payload, headers)
 
-    async def health(self) -> Dict[str, bool]:
+    async def health(self) -> Dict[str, Any]:
         try:
             async with httpx.AsyncClient(timeout=3) as client:
                 resp = await client.get(self.url.rsplit("/", 1)[0] + "/health")
@@ -87,7 +87,7 @@ class SplunkHECEmitter(SIEMEmitter):
         headers = {"Authorization": f"Splunk {self.token}"}
         await _post_with_retry(f"{self.url}/services/collector", payload, headers)
 
-    async def health(self) -> Dict[str, bool]:
+    async def health(self) -> Dict[str, Any]:
         try:
             headers = {"Authorization": f"Splunk {self.token}"}
             async with httpx.AsyncClient(timeout=3) as client:
@@ -107,7 +107,7 @@ class ElasticEmitter(SIEMEmitter):
         headers = {"Authorization": f"ApiKey {self.api_key}"}
         await _post_with_retry(f"{self.url}/{self.index}/_doc", alert.model_dump(), headers)
 
-    async def health(self) -> Dict[str, bool]:
+    async def health(self) -> Dict[str, Any]:
         try:
             headers = {"Authorization": f"ApiKey {self.api_key}"}
             async with httpx.AsyncClient(timeout=3) as client:
@@ -135,7 +135,9 @@ class SentinelEmitter(SIEMEmitter):
             f"x-ms-date:{date}\n/api/logs"
         )
         decoded_key = b64encode(self.shared_key.encode()).decode()
-        import base64, hmac as _hmac, hashlib as _hs
+        import base64
+        import hmac as _hmac
+        import hashlib as _hs
         key_bytes = base64.b64decode(decoded_key)
         encoded = _hmac.new(key_bytes, string_to_hash.encode("utf-8"), _hs.sha256).digest()
         return b64encode(encoded).decode()
@@ -196,7 +198,7 @@ class MultiEmitter(SIEMEmitter):
             if isinstance(result, Exception):
                 logger.error("SIEM emitter[%d] failed: %s", i, result)
 
-    async def health(self) -> Dict[str, bool]:
+    async def health(self) -> Dict[str, Any]:
         results = await asyncio.gather(
             *[e.health() for e in self.emitters], return_exceptions=True
         )
