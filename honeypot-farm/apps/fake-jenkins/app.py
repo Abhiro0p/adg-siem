@@ -36,7 +36,7 @@ def _security_headers(response: Response) -> Response:
         "X-Content-Type-Options": "nosniff",
         "X-Frame-Options": "SAMEORIGIN",
         "X-XSS-Protection": "1; mode=block",
-        "Server": f"Jetty(10.0.13)",
+        "Server": "Jetty(10.0.13)",
         "X-Jenkins": JENKINS_VERSION,
         "X-Hudson": "1.395",
         "Cache-Control": "no-store",

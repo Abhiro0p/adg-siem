@@ -8,7 +8,7 @@ import asyncio
 import ipaddress
 import logging
 import socket
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import httpx
 

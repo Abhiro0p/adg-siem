@@ -32,7 +32,7 @@ from .dns import DNSUpdater
 from .dns_providers import CloudflareProvider, DNSProvider, PowerDNSProvider, RFC2136Provider, Route53Provider
 from .enrichment import enrich_ip
 from .health import run_readiness_checks
-from .kill_chain import enrich_techniques, kill_chain_for
+from .kill_chain import enrich_techniques
 from .leader import LeaderElector
 from .models import Event
 from .orchestrator import DryRunOrchestrator, KubernetesOrchestrator, Orchestrator
