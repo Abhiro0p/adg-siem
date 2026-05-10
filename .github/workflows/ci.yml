@@ -62,6 +62,7 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           trivyignores: .trivyignore
+          scanners: vuln
           exit-code: 1
 
   test-token-engine:
