@@ -1,0 +1,9 @@
+# These findings are intentional decoy/honeytoken credentials used for deception.
+# They are fake by design and contain no real secrets.
+
+# Fake GCP service account JSON in token generator (generated at runtime, not real)
+token-engine/app/generator.py
+
+# Ansible breadcrumb roles deploy fake credentials as lures — not real secrets
+breadcrumbs/ansible/roles/breadcrumbs-linux/tasks/main.yml
+breadcrumbs/ansible/roles/breadcrumbs-windows/tasks/main.yml
